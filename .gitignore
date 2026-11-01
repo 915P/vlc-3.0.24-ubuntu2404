@@ -1,0 +1,6 @@
+*.deb
+*.tar.xz
+*.log
+staging/
+deb/
+SHA256SUMSbuild/ca-certificates.crt

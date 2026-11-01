@@ -1,0 +1,42 @@
+# VLC 3.0.24 build environment — EXACT Dockerfile used for the published deb.
+#
+# Differences from the portable Dockerfile (all specific to our build machine):
+#  1. apt uses the USTC IPv6 mirror (fast on CERNET): https://ipv6.mirrors.ustc.edu.cn/ubuntu
+#     -> IPv6-only host, so build containers need `docker build --network host`.
+#  2. ubuntu:24.04 base image ships no ca-certificates, so HTTPS to the mirror fails
+#     certificate verification. Copy your host CA bundle into the build context first:
+#         cp /etc/ssl/certs/ca-certificates.crt build/
+#  3. kobuk-team-intel-graphics PPA (not mirrored by USTC) provides libva 2.24 and the
+#     Intel iHD VA-API driver 26.3.5 with Arrow Lake support. Key + source list are
+#     copied from the host into the image.
+FROM docker.1ms.run/library/ubuntu:24.04
+
+COPY ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+COPY kobuk-team-intel-graphics-noble.gpg /etc/apt/keyrings/kobuk-team-intel-graphics-noble.gpg
+COPY kobuk-team-intel-graphics-noble.list /etc/apt/sources.list.d/kobuk-team-intel-graphics-noble.list
+
+RUN rm -f /etc/apt/sources.list /etc/apt/sources.list.d/*.sources && \
+    { \
+      echo 'deb https://ipv6.mirrors.ustc.edu.cn/ubuntu noble main restricted universe multiverse'; \
+      echo 'deb https://ipv6.mirrors.ustc.edu.cn/ubuntu noble-updates main restricted universe multiverse'; \
+      echo 'deb https://ipv6.mirrors.ustc.edu.cn/ubuntu noble-security main restricted universe multiverse'; \
+      echo 'deb-src https://ipv6.mirrors.ustc.edu.cn/ubuntu noble main restricted universe multiverse'; \
+      echo 'deb-src https://ipv6.mirrors.ustc.edu.cn/ubuntu noble-updates main restricted universe multiverse'; \
+      echo 'deb-src https://ipv6.mirrors.ustc.edu.cn/ubuntu noble-security main restricted universe multiverse'; \
+    } > /etc/apt/sources.list
+
+# Full VLC build dependencies (same set as Ubuntu's vlc package) + VA-API/verification extras
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      build-essential ca-certificates curl pkg-config gettext autopoint \
+      bison flex yasm nasm ccache file \
+      libva-dev libvdpau-dev libdrm-dev \
+      vainfo intel-media-va-driver-non-free \
+      ffmpeg \
+    && apt-get build-dep -y vlc \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo "--- va driver versions ---" \
+    && dpkg-query -W -f='${Package} ${Version}\n' libva-dev intel-media-va-driver-non-free 2>/dev/null
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LC_ALL=C.UTF-8

@@ -2,6 +2,7 @@
 # Package the compiled VLC staging tree as a .deb that replaces Ubuntu's vlc* packages.
 set -euo pipefail
 S="${VLC_BUILD_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
+VER=3.0.24-2
 B=$S/deb
 rm -rf "$B"
 mkdir -p "$B/DEBIAN"
@@ -32,16 +33,23 @@ tr ',' '\n' < "$tmp/depends" | sed 's/^ //' | nl
 OLDPKGS="libvlc-bin, libvlc5, libvlccore9, vlc-bin, vlc-data, vlc-l10n, \
 vlc-plugin-access-extra, vlc-plugin-base, vlc-plugin-notify, vlc-plugin-qt, \
 vlc-plugin-samba, vlc-plugin-skins2, vlc-plugin-video-output, \
-vlc-plugin-video-splitter, vlc-plugin-visualization"
+vlc-plugin-video-splitter, vlc-plugin-visualization, \
+vlc-plugin-bittorrent, vlc-plugin-fluidsynth, vlc-plugin-jack, \
+vlc-plugin-pipewire, vlc-plugin-svg"
+
+# size of the payload as installed (dpkg Installed-Size field, in KiB)
+SIZE=$(du -sk "$B" | cut -f1)
 
 cat > "$B/DEBIAN/control" <<EOF
 Package: vlc
-Version: 3.0.24-1
+Version: $VER
 Architecture: amd64
 Maintainer: 915P <915P@users.noreply.github.com>
 Section: video
 Priority: optional
-Depends: $(cat "$tmp/depends")
+Installed-Size: $SIZE
+Depends: $(cat "$tmp/depends"), libc6 (>= 2.38)
+Provides: libvlc5 (= $VER), libvlccore9 (= $VER), vlc-plugin-base (= $VER), vlc-plugin-video-output (= $VER)
 Recommends: intel-media-va-driver-non-free, vainfo
 Conflicts: $OLDPKGS
 Replaces: $OLDPKGS
@@ -70,7 +78,7 @@ exit 0
 EOF
 chmod 755 "$B/DEBIAN/postinst" "$B/DEBIAN/prerm"
 
-dpkg-deb --build --root-owner-group "$B" "$S/vlc_3.0.24-1_amd64.deb"
-dpkg-deb -I "$S/vlc_3.0.24-1_amd64.deb" | sed -n '1,40p'
-ls -lh "$S/vlc_3.0.24-1_amd64.deb"
+dpkg-deb --build --root-owner-group "$B" "$S/vlc_${VER}_amd64.deb"
+dpkg-deb -I "$S/vlc_${VER}_amd64.deb" | sed -n '1,40p'
+ls -lh "$S/vlc_${VER}_amd64.deb"
 rm -rf "$tmp"

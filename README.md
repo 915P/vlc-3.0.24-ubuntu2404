@@ -13,7 +13,7 @@ with **Intel GPU hardware-accelerated decoding (VA-API / VDPAU)** enabled.
 
 | File | Purpose |
 |---|---|
-| `vlc_3.0.24-1_amd64.deb` | The built package (installs to `/usr/local`, dpkg-managed) |
+| `vlc_3.0.24-2_amd64.deb` | The built package (installs to `/usr/local`, dpkg-managed) |
 | `vlc-3.0.24.tar.xz` | Official VideoLAN source tarball (GPL source for this binary, sha256 verified) |
 | `SHA256SUMS` | Checksums for both files |
 
@@ -26,7 +26,12 @@ See [VERIFICATION.md](VERIFICATION.md) for the hardware-decoding test logs.
 - **380 plugin modules**, full Qt GUI, 100+ languages
 - Built against Ubuntu 24.04 libraries (FFmpeg 6.1, Qt 5.15, libva 2.24)
 - Hardware decoding verified on Intel Arrow Lake-P iGPU with the Intel iHD VA-API driver
-- Ships as a single dpkg package with a computed `Depends` list (236 runtime libraries)
+- Ships as a single dpkg package with a computed `Depends` list (236 ldd-derived runtime libraries + `libc6`)
+- **v3.0.24-2 packaging fixes** (after an external review): versioned `Provides` for
+  `libvlc5` / `libvlccore9` / `vlc-plugin-base` / `vlc-plugin-video-output` — without them,
+  installing *any* third-party package with `Depends: libvlc5` makes apt plan the removal of
+  this package; plus `Installed-Size`, an explicit `libc6 (>= 2.38)`, and `Conflicts` extended
+  to the whole Ubuntu plugin family (`jack`/`pipewire`/`bittorrent`/`fluidsynth`/`svg`)
 
 ## Hardware acceleration (verified)
 
@@ -56,19 +61,18 @@ vlc -vvv --intf dummy --vout dummy --avcodec-hw=vaapi some.mp4 --run-time 4 vlc:
 
 ```bash
 sha256sum -c SHA256SUMS
-sudo apt install ./vlc_3.0.24-1_amd64.deb
+sudo apt install ./vlc_3.0.24-2_amd64.deb
 ```
 
 **Replacing Ubuntu's packaged VLC?** Ubuntu's `vlc` package set (3.0.20) conflicts with
-this build. Ubuntu also routes KDE's phonon multimedia through a VLC backend, so install
-an alternative backend in the same command to keep `okular` and other KDE apps intact:
-
-```bash
-sudo apt install ./vlc_3.0.24-1_amd64.deb phonon4qt5-backend-gstreamer
-```
-
-The package `Conflicts`/`Replaces` the whole Ubuntu `vlc*` set, so this single command
-removes the old player and installs this one. Afterwards `vlc` resolves to
+this build; the package `Conflicts`/`Replaces` the whole set, so the single command above
+removes the old player and installs this one. The versioned `Provides` (added in
+v3.0.24-2) satisfy anything that `Depends: libvlc5` / `vlc-plugin-base` — including
+Ubuntu's `phonon4qt5-backend-vlc` used by `okular` and other KDE apps, which therefore
+stays installable without extra steps. (For v3.0.24-1 you had to add
+`phonon4qt5-backend-gstreamer` in the same command to avoid apt removing the okular
+chain; that is no longer required, though adding it still works if you prefer a
+non-VLC phonon backend.) Afterwards `vlc` resolves to
 `/usr/local/bin/vlc`, and the desktop menu entry points to it as well.
 
 Uninstall like any normal package:
@@ -97,7 +101,7 @@ compiling. See [`build/`](build/) for the scripts used (paths parameterized for 
 docker build -t vlc-builder build/
 tar xf vlc-3.0.24.tar.xz          # source tree next to build/
 docker run --rm -v "$PWD":/build -w /build vlc-builder bash /build/build/build.sh
-bash build/make-deb.sh            # -> vlc_3.0.24-1_amd64.deb
+bash build/make-deb.sh            # -> vlc_3.0.24-2_amd64.deb
 ```
 
 Path conventions: `build.sh` / `verify.sh` run *inside* the container where the build

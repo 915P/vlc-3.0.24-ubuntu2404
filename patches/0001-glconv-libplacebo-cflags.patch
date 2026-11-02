@@ -1,0 +1,31 @@
+--- a/modules/Makefile.in
++++ b/modules/Makefile.in
+@@ -12588,24 +12588,24 @@
+ 	video_output/opengl/converter.h \
+ 	hw/vaapi/vlc_vaapi.c hw/vaapi/vlc_vaapi.h
+ 
+-libglconv_vaapi_wl_plugin_la_CFLAGS = $(AM_CFLAGS) $(GL_CFLAGS) -DHAVE_VA_WL $(LIBVA_WL_CFLAGS)
++libglconv_vaapi_wl_plugin_la_CFLAGS = $(AM_CFLAGS) $(OPENGL_COMMONCLFAGS) $(GL_CFLAGS) -DHAVE_VA_WL $(LIBVA_WL_CFLAGS)
+ libglconv_vaapi_wl_plugin_la_LIBADD = $(LIBVA_LIBS) $(LIBVA_EGL_LIBS) \
+ 	$(LIBVA_WL_LIBS)
+ 
+ libglconv_vaapi_x11_plugin_la_SOURCES = $(libglconv_vaapi_wl_plugin_la_SOURCES)
+-libglconv_vaapi_x11_plugin_la_CFLAGS = $(AM_CFLAGS) -DHAVE_VA_X11
++libglconv_vaapi_x11_plugin_la_CFLAGS = $(AM_CFLAGS) $(OPENGL_COMMONCLFAGS) -DHAVE_VA_X11
+ libglconv_vaapi_x11_plugin_la_LIBADD = $(LIBVA_LIBS) $(LIBVA_EGL_LIBS) \
+ 	$(LIBVA_X11_LIBS) $(X_LIBS) $(X_PRE_LIBS) -lX11
+ 
+ libglconv_vaapi_drm_plugin_la_SOURCES = $(libglconv_vaapi_wl_plugin_la_SOURCES)
+-libglconv_vaapi_drm_plugin_la_CFLAGS = $(AM_CFLAGS) -DHAVE_VA_DRM
++libglconv_vaapi_drm_plugin_la_CFLAGS = $(AM_CFLAGS) $(OPENGL_COMMONCLFAGS) -DHAVE_VA_DRM
+ libglconv_vaapi_drm_plugin_la_LIBADD = $(LIBVA_LIBS) $(LIBVA_EGL_LIBS) \
+ 	$(LIBVA_DRM_LIBS)
+ 
+ libglconv_vdpau_plugin_la_SOURCES = video_output/opengl/converter_vdpau.c \
+ 	video_output/opengl/converter.h hw/vdpau/vlc_vdpau.h
+ 
+-libglconv_vdpau_plugin_la_CFLAGS = $(AM_CFLAGS) $(VDPAU_CFLAGS)
++libglconv_vdpau_plugin_la_CFLAGS = $(AM_CFLAGS) $(OPENGL_COMMONCLFAGS) $(VDPAU_CFLAGS)
+ libglconv_vdpau_plugin_la_LIBADD = $(LIBDL) libvlc_vdpau.la $(X_LIBS) $(X_PRE_LIBS) -lX11
+ 
+ ### XCB ###

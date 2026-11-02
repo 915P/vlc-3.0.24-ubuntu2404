@@ -2,7 +2,7 @@
 # Package the compiled VLC staging tree as a .deb that replaces Ubuntu's vlc* packages.
 set -euo pipefail
 S="${VLC_BUILD_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
-VER=3.0.24-2
+VER=3.0.24-3
 B=$S/deb
 rm -rf "$B"
 mkdir -p "$B/DEBIAN"

@@ -4,10 +4,12 @@
 # VLC 3.x configure requires `libplacebo >= 0.2.1 libplacebo < 6` (configure.ac),
 # but Ubuntu 24.04 ships only libplacebo 6.338.2, so no distro build has tone
 # mapping. We build 5.x locally instead. Runs inside the vlc-builder image with
-# the workspace mounted at /build (same convention as build.sh):
+# the workspace mounted at /build (same convention as build.sh); meson and
+# ninja are the only packages missing from that image:
 #
-#   docker run --rm -v "$PWD":/build -w /build vlc-builder \
-#     bash /build/build/build-libplacebo.sh
+#   docker run --rm -v "$PWD":/build -w /build vlc-builder bash -c \
+#     "apt-get update && apt-get install -y meson ninja-build && \
+#      bash /build/build/build-libplacebo.sh"
 set -euo pipefail
 
 VER=5.264.1
